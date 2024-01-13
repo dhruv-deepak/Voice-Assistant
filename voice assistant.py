@@ -3,6 +3,8 @@ import wolframalpha
 import pyttsx3
 import tkinter
 import json
+import time
+import tkinter as tk
 import random
 import operator
 import speech_recognition as sr
@@ -18,7 +20,9 @@ import ctypes
 import time
 import requests
 import shutil
+import openai
 from twilio.rest import Client
+from PIL import Image, ImageTk
 from clint.textui import progress
 from ecapture import ecapture as ec
 from bs4 import BeautifulSoup
@@ -29,7 +33,7 @@ from urllib.request import urlopen
 
 engine = pyttsx3.init('sapi5')
 voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[1].id)
+engine.setProperty('voice', voices[0].id)
 
 
 
@@ -38,36 +42,22 @@ def speak(audio):
     engine.say(audio)
     engine.runAndWait()
  
-def wishMe():
+def greet():
     hour = int(datetime.datetime.now().hour)
     if hour>= 0 and hour<12:
-        speak("Good Morning Sir !")
+        speak("Good Morning Sir!")
   
     elif hour>= 12 and hour<18:
-        speak("Good Afternoon Sir !")   
+        speak("Good Afternoon Sir!")   
   
     else:
-        speak("Good Evening Sir !")  
+        speak("Good Evening Sir!")  
   
-    assname =("Jarvis 1 point o")
-    speak("I am your Assistant")
-    speak(assname)
+    assist_name =("Jarvis 1 point o")
+    speak("I am your Virtual Assistant")
+    speak(assist_name)
      
- 
-def username():
-    speak("What should i call you sir")
-    uname = takeCommand()
-    speak("Welcome Mister")
-    speak(uname)
-    columns = shutil.get_terminal_size().columns
-     
-    print("#####################".center(columns))
-    print("Welcome Mr.", uname.center(columns))
-    print("#####################".center(columns))
-     
-    speak("How can i Help you, Sir")
- 
-def takeCommand():
+def take_command():
      
     r = sr.Recognizer()
      
@@ -84,21 +74,45 @@ def takeCommand():
   
     except Exception as e:
         print(e)    
-        print("Unable to Recognize your voice.")  
+        print("Sorry! I am unable to recognize your voice. Please say again!")  
         return "None"
      
     return query
+
+def username():
+    speak("What should i call you sir!")
+    uname = take_command()
+    while not uname:  
+        speak("I didn't get that. Please tell me your name again.")
+        uname = take_command()
+    speak("Welcome Mister")
+    speak(uname)
+    columns = shutil.get_terminal_size().columns
+     
+    print("                      #####################".center(columns))
+    print("Welcome Mr.", uname.center(columns))
+    print("                      #####################".center(columns))
+     
+    speak("How can i Help you, Sir")
+ 
   
 def sendEmail(to, content):
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.ehlo()
     server.starttls()
-     
-    
     server.login('your email id', 'your email password')
     server.sendmail('your email id', to, content)
     server.close()
 
+openai.api_key = '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'
+
+def chatgpt_query(query):
+    response = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=query,
+        max_tokens=300
+    )
+    return response.choices[0].text.strip()
 
 
 if __name__ == '__main__':
@@ -106,16 +120,25 @@ if __name__ == '__main__':
      
  
     clear()
-    wishMe()
+    greet()
     username()
      
     while True:
          
-        query = takeCommand().lower()
-         
-     
-        if 'wikipedia' in query:
-            speak('Searching Wikipedia...')
+        query = take_command().lower()
+
+        if 'chat' in query:
+         speak('Sure, what would you like to chat about?')
+         user_input = take_command().lower()
+         chatgpt_response = chatgpt_query(user_input)
+         speak(chatgpt_response)
+
+        if 'gpt' in query:
+            speak("Opening Chat GPT")
+            webbrowser.open("https://chat.openai.com/")
+
+        if 'wikipedia' in query or 'internet' in query:
+            speak('Searching...')
             query = query.replace("wikipedia", "")
             results = wikipedia.summary(query, sentences = 3)
             speak("According to Wikipedia")
@@ -123,93 +146,155 @@ if __name__ == '__main__':
             speak(results)
  
         elif 'open youtube' in query:
-            speak("Here you go to Youtube\n")
+            speak("Opening Youtube\n")
             webbrowser.open("youtube.com")
  
         elif 'open google' in query:
-            speak("Here you go to Google\n")
+            speak("Opening Google\n")
             webbrowser.open("google.com")
  
         elif 'open stackoverflow' in query:
-            speak("Here you go to Stack Over flow.Happy coding")
+            speak("Opening Stack Over flow.Happy coding")
             webbrowser.open("stackoverflow.com")   
  
-        elif 'play music' in query or "play song" in query:
-            speak("Here you go with music")
-            # music_dir = "G:\\Song"
-            music_dir = "C:\\Users\\GAURAV\\Music"
-            songs = os.listdir(music_dir)
-            print(songs)    
-            random = os.startfile(os.path.join(music_dir, songs[1]))
- 
-        elif 'the time' in query:
-            strTime = datetime.datetime.now().strftime("% H:% M:% S")    
-            speak(f"Sir, the time is {strTime}")
- 
+        elif 'play music' in query or "play song" in query or 'play a song' in query:
+
+           def play_specific_song(file_path):
+            speak("Playing song:")
+            os.startfile(file_path)
+
+           music_directory = "C:/Users/Dell/Desktop/PT/"
+           song_filename = "NEFFEX - Grateful [Copyright Free] No.54.mp3"
+           song_path = os.path.join(music_directory, song_filename)
+           play_specific_song(song_path)
+
+        elif 'time' in query:
+
+         strTime = datetime.datetime.now().strftime("%H:%M:%S")
+         speak(f"Sir, currently the time is {strTime}")
+        
+        elif "random number" in query:
+           speak("please provide the minimum value of the range")
+           content1=take_command()
+           speak("Please provide the maximum value of the range")
+           content2=take_command()
+           speak("Generating a random number")
+           print("Generating a random number:")
+           a=random.randint(content1,content2)
+           speak("The number is:",a)
+           print("The number is:",a)
+
+        elif "roll dice" in query or "roll a dice" in query:
+            speak("Rolling Dice")
+            def display_dice(number, root):
+              dice_images = [
+             "C:/Users/Dell/Desktop/Voice Assistant using Python/Dice Images/dice1.png",
+             "C:/Users/Dell/Desktop/Voice Assistant using Python/Dice Images/dice2.png",
+             "C:/Users/Dell/Desktop/Voice Assistant using Python/Dice Images/dice3.png",
+             "C:/Users/Dell/Desktop/Voice Assistant using Python/Dice Images/dice4.png",
+             "C:/Users/Dell/Desktop/Voice Assistant using Python/Dice Images/dice5.png",
+             "C:/Users/Dell/Desktop/Voice Assistant using Python/Dice Images/dice6.png",
+             ]
+
+              image_path = dice_images[number - 1]
+              image = Image.open(image_path)
+
+              photo = ImageTk.PhotoImage(image)
+
+              label = tk.Label(root, image=photo)
+              label.photo = photo  
+              label.pack()
+
+              root.update_idletasks()
+
+              time.sleep(1)
+
+              label.destroy()
+
+            def roll_dice():
+             num_dice = random.randint(1, 6)  
+             print(f"Rolling dice...")
+
+             root = tk.Tk()
+             root.title("Rolling Dice")
+
+             result = random.randint(1, 6)
+             print("The number is:", result)
+
+             for _ in range(num_dice):
+              display_dice(result, root)
+
+             root.destroy()
+
+            if __name__ == "__main__":
+              roll_dice()
+
+
         elif 'open opera' in query:
-            codePath = r"C:\\Users\\GAURAV\\AppData\\Local\\Programs\\Opera\\launcher.exe"
+            speak("opening opera")
+            codePath = r"C:/Users/Dell/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Opera Browser.lnk"
             os.startfile(codePath)
  
-        elif 'email to gaurav' in query:
+        elif 'email to dhruv' in query:
             try:
-                speak("What should I say?")
-                content = takeCommand()
+                speak("What would you like to write in email?")
+                content = take_command()
                 to = "Receiver email address"   
                 sendEmail(to, content)
                 speak("Email has been sent !")
             except Exception as e:
                 print(e)
-                speak("I am not able to send this email")
+                speak("Sorry Sir,I am unable to send this email!")
  
         elif 'send a mail' in query:
             try:
-                speak("What should I say?")
-                content = takeCommand()
-                speak("whome should i send")
+                speak("What would you like to write in email?")
+                content = take_command()
+                speak("To whom should i send?")
                 to = input()    
                 sendEmail(to, content)
                 speak("Email has been sent !")
             except Exception as e:
                 print(e)
-                speak("I am not able to send this email")
+                speak("Sorry Sir,I am unable to send this email!")
  
         elif 'how are you' in query:
             speak("I am fine, Thank you")
-            speak("How are you, Sir")
+            speak("How are you, Sir?")
  
         elif 'fine' in query or "good" in query:
             speak("It's good to know that your fine")
  
-        elif "change my name to" in query:
+        elif "change my name" in query:
             query = query.replace("change my name to", "")
-            assname = query
+            assist_name = query
  
-        elif "change name" in query:
+        elif "change your name" in query:
             speak("What would you like to call me, Sir ")
-            assname = takeCommand()
-            speak("Thanks for naming me")
+            assist_name = take_command()
+            speak("Thanks for naming me, Sir!")
  
         elif "what's your name" in query or "What is your name" in query:
             speak("My friends call me")
-            speak(assname)
-            print("My friends call me", assname)
+            speak(assist_name)
+            print("My friends call me", assist_name)
  
         elif 'exit' in query:
             speak("Thanks for giving me your time")
             exit()
  
         elif "who made you" in query or "who created you" in query: 
-            speak("I have been created by Gaurav.")
+            speak("I was created by Mister Dhruv.")
              
         elif 'joke' in query:
             speak(pyjokes.get_joke())
              
         elif "calculate" in query: 
              
-            app_id = "Wolframalpha api id"
+            app_id = "2P9EVQ-EL6WY2PAPR"
             client = wolframalpha.Client(app_id)
-            indx = query.lower().split().index('calculate') 
-            query = query.split()[indx + 1:] 
+            index = query.lower().split().index('calculate') 
+            query = query.split()[index + 1:] 
             res = client.query(' '.join(query)) 
             answer = next(res.results).text
             print("The answer is " + answer) 
@@ -220,26 +305,26 @@ if __name__ == '__main__':
             query = query.replace("search", "") 
             query = query.replace("play", "")          
             webbrowser.open(query) 
- 
-        elif "who i am" in query:
-            speak("If you talk then definitely your human.")
+  
+        elif "who am i" in query:
+            speak("If you can talk then definitely you are a human.")
  
         elif "why you came to world" in query:
-            speak("Thanks to Gaurav. further It's a secret")
+            speak("Thanks to Dhruv. Further It's a secret")
  
-        elif 'power point presentation' in query:
+        elif 'power point presentation' in query or "ppt" in query:
             speak("opening Power Point presentation")
-            power = r"C:\\Users\\GAURAV\\Desktop\\Minor Project\\Presentation\\Voice Assistant.pptx"
+            power = r"C:/ProgramData/Microsoft/Windows/Start Menu/Programs/PowerPoint.lnk"
             os.startfile(power)
  
         elif 'is love' in query:
-            speak("It is 7th sense that destroy all other senses")
+            speak("It is 7th sense that destroy all other senses.")
  
         elif "who are you" in query:
-            speak("I am your virtual assistant created by Gaurav")
+            speak("I am your virtual assistant created by Mister Dhruv")
  
         elif 'reason for you' in query:
-            speak("I was created as a Minor project by Mister Gaurav ")
+            speak("I was created as a Minor project by Mister Dhruv")
  
         elif 'change background' in query:
             ctypes.windll.user32.SystemParametersInfoW(20, 
@@ -249,13 +334,13 @@ if __name__ == '__main__':
             speak("Background changed successfully")
  
         elif 'open bluestack' in query:
-            appli = r"C:\\ProgramData\\BlueStacks\\Client\\Bluestacks.exe"
+            appli = r"C:/ProgramData/Microsoft/Windows/Start Menu/Programs/BlueStacks X/BlueStacks X.lnk"
             os.startfile(appli)
  
         elif 'news' in query:
              
             try: 
-                jsonObj = urlopen('''https://newsapi.org / v1 / articles?source = the-times-of-india&sortBy = top&apiKey =\\times of India Api key\\''')
+                jsonObj = urlopen('''https://newsapi.org / v1 / articles?source = the-times-of-india&sortBy = top&apiKey =\\4fdaf978fc204e7099996bcf09850996\\''')
                 data = json.load(jsonObj)
                 i = 1
                  
@@ -286,8 +371,8 @@ if __name__ == '__main__':
             speak("Recycle Bin Recycled")
  
         elif "don't listen" in query or "stop listening" in query:
-            speak("for how much time you want to stop jarvis from listening commands")
-            a = int(takeCommand())
+            speak("for how much time you want to stop jarvis 1 point o from listening commands")
+            a = int(take_command())
             time.sleep(a)
             print(a)
  
@@ -313,12 +398,13 @@ if __name__ == '__main__':
             time.sleep(5)
             subprocess.call(["shutdown", "/l"])
  
-        elif "write a note" in query:
+        elif "write a note" in query or 'open notepad' in query:
+            speak('Opening Notepad')
             speak("What should i write, sir")
-            note = takeCommand()
-            file = open('jarvis.txt', 'w')
+            note = take_command()
+            file = open('C:/Users/Dell/Desktop/Voice Assistant using Python/Note/New Text File.txt', 'w')
             speak("Sir, Should i include date and time")
-            snfm = takeCommand()
+            snfm = take_command()
             if 'yes' in snfm or 'sure' in snfm:
                 strTime = datetime.datetime.now().strftime("% H:% M:% S")
                 file.write(strTime)
@@ -329,7 +415,7 @@ if __name__ == '__main__':
          
         elif "show note" in query:
             speak("Showing Notes")
-            file = open("jarvis.txt", "r") 
+            file = open("C:/Users/Dell/Desktop/Voice Assistant using Python/Note/New Text File.txt", "r") 
             print(file.read())
             speak(file.read(6))
  
@@ -350,33 +436,37 @@ if __name__ == '__main__':
        
         elif "jarvis" in query:
              
-            wishMe()
-            speak("Jarvis 1 point o in your service Mister")
-            speak(assname)
+            greet()
+            speak("Jarvis 1 point o is in your service Mister")
+            speak(assist_name)
  
         elif "weather" in query:
              
-          
-            api_key = "Api key"
-            base_url = "http://api.openweathermap.org / data / 2.5 / weather?"
-            speak(" City name ")
-            print("City name : ")
-            city_name = takeCommand()
-            complete_url = base_url + "appid =" + api_key + "&q =" + city_name
-            response = requests.get(complete_url) 
-            x = response.json() 
-             
-            if x["code"] != "404": 
-                y = x["main"] 
-                current_temperature = y["temp"] 
-                current_pressure = y["pressure"] 
-                current_humidiy = y["humidity"] 
-                z = x["weather"] 
-                weather_description = z[0]["description"] 
-                print(" Temperature (in kelvin unit) = " +str(current_temperature)+"\n atmospheric pressure (in hPa unit) ="+str(current_pressure) +"\n humidity (in percentage) = " +str(current_humidiy) +"\n description = " +str(weather_description)) 
-             
-            else: 
-                speak(" City Not Found ")
+          api_key = "d8a2e2ebc69dbf838d3ea0ade951d348"
+          base_url = "http://api.openweathermap.org/data/2.5/weather?"
+
+          speak("City name: ")
+          print("City name: ")
+          city_name = take_command()
+          complete_url = base_url + "appid=" + api_key + "&q=" + city_name
+          response = requests.get(complete_url)
+          weather_data = response.json()
+
+          if response.status_code == 200:
+             main_data = weather_data["main"]
+             current_temperature = main_data["temp"]
+             current_pressure = main_data["pressure"]
+             current_humidity = main_data["humidity"]
+             weather_description = weather_data["weather"][0]["description"]
+
+             print(f"Temperature: {current_temperature} K")
+             print(f"Atmospheric pressure: {current_pressure} hPa")
+             print(f"Humidity: {current_humidity}%")
+             print(f"Weather description: {weather_description}")
+
+          else:
+             print(f"Error: {weather_data['message']}")
+             speak("Sorry, I couldn't retrieve the weather information for the specified city.")
              
         elif "send message " in query:
                 
@@ -386,7 +476,7 @@ if __name__ == '__main__':
  
                 message = client.messages \
                                 .create(
-                                    body = takeCommand(),
+                                    body = take_command(),
                                     from_='Sender No',
                                     to ='Receiver No'
                                 )
@@ -399,7 +489,7 @@ if __name__ == '__main__':
         elif "Good Morning" in query:
             speak("A warm" +query)
             speak("How are you Mister")
-            speak(assname)
+            speak(assist_name)
  
         
         elif "will you be my gf" in query or "will you be my bf" in query:   
@@ -413,8 +503,7 @@ if __name__ == '__main__':
  
         elif "what is" in query or "who is" in query:
              
-            
-            client = wolframalpha.Client("API_ID")
+            client = wolframalpha.Client("2P9EVQ-EL6WY2PAPR")
             res = client.query(query)
              
             try:
@@ -422,5 +511,9 @@ if __name__ == '__main__':
                 speak (next(res.results).text)
             except StopIteration:
                 print ("No results")
+
+        else:
+            speak("I cant understand that sir! Please try again.")
+            print("I cant understand that sir! Please try again.")
 
     

@@ -135,16 +135,7 @@ if __name__ == '__main__':
             speak("Opening Stack Over flow.Happy coding")
             webbrowser.open("stackoverflow.com")   
  
-        elif 'play music' in query or "play song" in query or 'play a song' in query:
-
-           def play_specific_song(file_path):
-            speak("Playing song:")
-            os.startfile(file_path)
-
-           music_directory = "C:/Users/Dell/Desktop/PT/"
-           song_filename = "NEFFEX - Grateful [Copyright Free] No.54.mp3"
-           song_path = os.path.join(music_directory, song_filename)
-           play_specific_song(song_path)
+        
 
         elif 'time' in query:
 
@@ -152,15 +143,12 @@ if __name__ == '__main__':
          speak(f"Sir, currently the time is {strTime}")
         
         elif "random number" in query:
-           speak("please provide the minimum value of the range")
-           content1=take_command()
-           speak("Please provide the maximum value of the range")
-           content2=take_command()
+           
            speak("Generating a random number")
            print("Generating a random number:")
-           a=random.randint(content1,content2)
-           speak("The number is:",a)
-           print("The number is:",a)
+           a=random.randint(1,1000)
+           speak(f"The number is:{a}")
+           print(f"The number is:{a}")
 
         elif "roll dice" in query or "roll a dice" in query:
             speak("Rolling Dice")
@@ -433,7 +421,7 @@ if __name__ == '__main__':
             speak("I'm fine, glad you me that")
  
         elif "i love you" in query:
-            speak("It's hard to understand")
+            speak("I am sorry, I don't")
  
         elif "what is" in query or "who is" in query:
              
